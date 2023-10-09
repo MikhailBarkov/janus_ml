@@ -1,0 +1,6 @@
+aiohttp
+aioboto3
+pydantic
+pyyaml
+aiogremlin
+pydantic-settings

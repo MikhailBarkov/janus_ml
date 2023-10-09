@@ -1,0 +1,92 @@
+version: "2"
+
+services:
+  export_service:
+    build: ./export_service
+    container_name: export_service
+    user: root
+    command: python export_service/app --port 8081
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/export_service/
+    restart: always
+    networks:
+      - net
+
+  processing_service:
+    build: ./processing_service
+    container_name: processing_service
+    user: root
+    command: python processing_service/app --port 8082
+    ports:
+      - "8082:8082"
+    volumes:
+      - .:/processing_service/
+    restart: always
+    networks:
+      - net
+
+  train_service:
+    build: ./train_service
+    container_name: train_service
+    user: root
+    command: python train_service/app --port 8083
+    ports:
+      - "8083:8083"
+    volumes:
+      - .:/train_service/
+    ipc: host
+    mem_limit: 2G
+    networks:
+      - net
+
+  endpoint_service:
+    build: ./endpoint_service
+    container_name: endpoint_service
+    user: root
+    command: python endpoint_service/app --port 8084
+    ports:
+      - "8084:8084"
+    volumes:
+      - .:/endpoint_service/
+    networks:
+      - net
+
+  s3:
+    image: minio/minio
+    container_name: s3
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_storage:/data
+    environment:
+      MINIO_ROOT_USER: 123
+      MINIO_ROOT_PASSWORD: 12345678
+    command: server --console-address ":9001" /data
+    networks:
+      - net
+
+  janusgraph:
+    build: ./janusgraph
+    container_name: janusgraph-default
+    ports:
+      - "8182:8182"
+    volumes:
+      - "janusgraph-default-data:/var/lib/janusgraph"
+    mem_limit: 1G
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  export_service:
+  processing_service:
+  train_service:
+  endpoint_service:
+  minio_storage:
+  janusgraph-default-data:

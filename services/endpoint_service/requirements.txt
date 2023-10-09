@@ -1,0 +1,7 @@
+aioboto3
+dgl
+torch
+pydantic
+pydantic-settings
+aiohttp
+pytorch_lightning

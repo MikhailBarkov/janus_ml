@@ -1,0 +1,9 @@
+torch
+pydantic
+pydantic-settings
+aiohttp
+dgl
+pytorch_lightning
+torchmetrics
+aioboto3
+scikit-learn

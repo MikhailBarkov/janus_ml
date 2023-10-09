@@ -1,0 +1,10 @@
+packaging
+dgl
+pydantic
+pydantic-settings
+aiohttp
+torch
+aioboto3
+pyyaml
+pandas
+scikit-learn
