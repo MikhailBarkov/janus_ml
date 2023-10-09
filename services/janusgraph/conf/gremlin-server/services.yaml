@@ -1,0 +1,2 @@
+services:
+  predict: http://endpoint_service:8084/call
