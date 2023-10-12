@@ -84,7 +84,7 @@ services:
       - "8182:8182"
     volumes:
       - "janusgraph-default-data:/var/lib/janusgraph"
-    mem_limit: 1G
+    mem_limit: 3G
     networks:
       - net
 
