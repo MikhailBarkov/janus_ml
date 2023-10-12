@@ -2,8 +2,6 @@ import asyncio
 from collections import defaultdict
 from typing import Union, List
 
-from gremlin_python.process.traversal import T
-
 from services.load_service import LoadService
 from services.s3_service import S3Service
 from settings import config
@@ -74,7 +72,7 @@ class ExportService:
                     new_entity_id = i
                     break
             else:
-                raise ValueError(f'{job.entity_id} not found')
+                raise ValueError(f'{job.entity_id} not found {nodes}')
 
             return {
                 'job_s3_key': job_key,
@@ -83,13 +81,23 @@ class ExportService:
             }
 
         else:
-            new_entity_id, _, _ = await asyncio.gather(
-                self.inductive_load(
-                    nodes_params, edges_params, job.n_layers, job.entity_id, job_key
+            nodes, edges, _, _ = await asyncio.gather(
+                self.inductive_export_nodes(
+                    nodes_params, job.n_layers, job.entity_id, job_key
+                ),
+                self.inductive_export_edges(
+                    edges_params, job.n_layers, job.entity_id, job_key
                 ),
                 self.s3_service.upload_meta(meta_params, job_key),
                 self.s3_service.upload_train_config(job, job_key),
             )
+
+            for i, n in enumerate(nodes):
+                if n['node_id'] == job.entity_id:
+                    new_entity_id = i
+                    break
+            else:
+                raise ValueError(f'{job.entity_id} not found {nodes}')
 
             return {
                 'job_s3_key': job_key,
@@ -123,7 +131,7 @@ class ExportService:
         nodes_list = []
 
         for label, properties in nodes_params.items():
-            nodes = await self.load_service.load_nodes(label, properties)
+            nodes = await self.load_service.transductive_load_nodes(label, properties)
 
             await self.s3_service.upload_nodes(job_key, nodes, label, properties)
 
@@ -135,7 +143,7 @@ class ExportService:
         edges_list = []
 
         for label, properties in edges_params.items():
-            edges = await self.load_service.load_edges(label, properties)
+            edges = await self.load_service.transductive_load_edges(label, properties)
 
             await self.s3_service.upload_edges(job_key, edges, label, properties)
 
@@ -143,25 +151,34 @@ class ExportService:
 
         return edges_list[0]
 
-    async def inductive_load(
-        self, nodes_params, edges_params, n_layers: int, entity_id, job_key: str
+    async def inductive_export_nodes(
+        self, nodes_params: dict[list[str]], n_layers, entity_id, job_key
     ):
-        for edge, properties in edges_params.items():
-            nodes, edges = await self.load_service.inductive_load(
-                entity_id, nodes_params, edge, properties, n_layers
+        nodes_list = []
+
+        for label, properties in nodes_params.items():
+            nodes = await self.load_service.inductive_load_nodes(
+                label, properties, n_layers, entity_id
             )
 
-            #TODO: change when the model RGCN appears
-            await asyncio.gather(
-                self.s3_service.upload_nodes(job_key, nodes, edge.out, list(nodes_params.values())[0]),
-                self.s3_service.upload_edges(job_key, edges, edge, properties)
+            await self.s3_service.upload_nodes(job_key, nodes, label, properties)
+
+            nodes_list.append(nodes)
+
+        return nodes_list[0]
+
+    async def inductive_export_edges(
+        self, edges_params: dict[list[str]], n_layers, entity_id, job_key
+    ):
+        edges_list = []
+
+        for label, properties in edges_params.items():
+            edges = await self.load_service.inductive_load_edges(
+                label, properties, n_layers, entity_id
             )
 
-            for i, n in enumerate(nodes):
-                if n['node_id'] == entity_id:
-                    new_entity_id = i
-                    break
-            else:
-                raise ValueError(f'{entity_id} not found')
+            await self.s3_service.upload_edges(job_key, edges, label, properties)
 
-        return new_entity_id
+            edges_list.append(edges)
+
+        return edges_list[0]

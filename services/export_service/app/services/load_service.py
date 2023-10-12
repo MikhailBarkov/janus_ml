@@ -1,7 +1,9 @@
 from itertools import chain
+from typing import Callable
 
 from gremlin_python.process.graph_traversal import __
 from gremlin_python.process.traversal import T
+from gremlin_python.process.traversal import P
 
 from db import get_gremlin_connection
 from models import (
@@ -16,27 +18,15 @@ class LoadService:
 
     @classmethod
     async def create(cls, endpoint):
-        self = LoadService()
-        self.g = await get_gremlin_connection(endpoint)
-        return self
+        g = await get_gremlin_connection(endpoint)
+        return cls(g)
 
-    async def load(self, get_traversal):
-        n = await get_traversal().count().next()
+    def __init__(self, g):
+        self.g = g
 
-        objects = []
-        batch_size = config.gremlin_batch_size
+    async def load_nodes(self, label: str, properties: list[str], traversal):
 
-        traversal = get_traversal()
-        for i in range(n//batch_size):
-            objects.extend(await traversal.next(batch_size))
-
-        objects.extend(await traversal.next(n%batch_size))
-
-        return objects
-
-    async def load_nodes(self, label: str, properties: list[str]):
-
-        def get_traversal(label=label, properties=properties):
+        def get_traversal(label=label, properties=properties, traversal=traversal):
             if not properties[0]:
                 properties = []
 
@@ -46,23 +36,23 @@ class LoadService:
 
             all_properties = ['node_id'] + properties
 
-            traversal = (
-                self.g.V()
+            proj_traversal = (
+                traversal
                 .hasLabel(label)
                 .project(*all_properties)
                 .by(T.id)
             )
 
             for property in properties:
-                traversal = traversal.by(property)
+                proj_traversal = proj_traversal.by(property)
 
-            return traversal
+            return proj_traversal
 
-        return await self.load(get_traversal)
+        return await get_traversal().toList()
 
-    async def load_edges(self, edge: tuple[str, str, str], properties: list[str]):
+    async def load_edges(self, edge: tuple[str, str, str], properties: list[str], traversal):
 
-        def get_traversal(edge=edge, properties=properties):
+        def get_traversal(edge=edge, properties=properties, traversal=traversal):
             if not properties[0]:
                 properties = []
 
@@ -72,96 +62,62 @@ class LoadService:
 
             all_properties = ['src_id', 'dst_id'] + properties
 
-            traversal = (
-                self.g.E()
+            proj_traversal = (
+                traversal
                 .hasLabel(edge.label)
                 .and_(
                     __.outV().hasLabel(edge.out),
                     __.inV().hasLabel(edge.in_)
                 )
                 .project(*all_properties)
-                .by(__.outV().id())
-                .by(__.inV().id())
+                .by(__.outV().id_())
+                .by(__.inV().id_())
             )
 
             for property in properties:
-                traversal = traversal.by(property)
+                proj_traversal = proj_traversal.by(property)
 
-            return traversal
+            return proj_traversal
 
-        return await self.load(get_traversal)
+        return await get_traversal().toList()
 
-    async def inductive_load(
-        self, node_id, node_params, edge, edge_properties, n_layers
+    async def transductive_load_nodes(self, label: str, properties: list[str]):
+        traversal = self.g.V()
+        return await self.load_nodes(label, properties, traversal)
+
+    async def transductive_load_edges(self, edge: tuple[str, str, str], properties: list[str]):
+        traversal = self.g.E()
+        return await self.load_edges(edge, properties, traversal)
+
+    async def inductive_load_nodes(
+        self, label: str, properties: list[str], n_layers: int, node_id: int
     ):
-        def get_traversal(
-            node_id=node_id,
-            node_params=node_params,
-            edge=edge,
-            edge_properties=edge_properties,
-            n_layers=n_layers
-        ):
-            #TODO: change for heterogenus graph
-            node_properties = node_params[edge.out]
+        trav = self.g.V(node_id)
+        for _ in range(n_layers):
+            subgraph_trav = trav.in_()
 
-            if 'label' in node_properties:
-                idx = node_properties.index('label')
-                node_properties[idx] = T.label
+        traversal = trav.dedup()
 
-            all_properties = ['node_id'] + node_properties + ['edges']
+        return await self.load_nodes(label, properties, traversal)
 
-            traversal = (
-                self.g
-                .V(node_id)
-                .emit()
-                .repeat(__.hasLabel(edge.out).both(edge.label).hasLabel(edge.in_))
-                .times(n_layers)
-                .project(*all_properties)
-                .by(T.id)
+    async def inductive_load_edges(
+        self, edge: tuple[str, str, str], properties: list[str], n_layers:int, node_id: int
+    ):
+        subgraph_trav = self.g.V(node_id).hasLabel(edge[0])
+        for _ in range(n_layers):
+            subgraph_trav = subgraph_trav.in_(edge[1]).barrier()
+
+        subgraph = await subgraph_trav.dedup().hasLabel(edge[2]).toList()
+
+        traversal = (
+            self.g.E()
+            .hasLabel(edge[1])
+            .where(
+                __.and_(
+                    __.outV().is_(P.within(subgraph)),
+                    __.inV().is_(P.within(subgraph))
+                )
             )
+        )
 
-            for property in node_properties:
-                traversal = traversal.by(property)
-
-            edge_properties = ['label']
-
-            all_edge_properties = ['edge_id', 'src_id', 'dst_id'] + edge_properties
-
-            if 'label' in edge_properties:
-                idx = edge_properties.index('label')
-                edge_properties[idx] = T.label
-
-            edge_trav = (
-                __.outE(edge.label)
-                .project(*all_edge_properties)
-                .by(__.id())
-                .by(__.outV().id())
-                .by(__.inV().id())
-            )
-
-            for property in edge_properties:
-                edge_trav = edge_trav.by(property)
-
-            traversal = traversal.by(edge_trav.fold())
-
-            return traversal
-
-        response = await self.load(get_traversal)
-
-        return self.extract(response, node_params[edge.out], edge_properties)
-
-    def extract(self, response, node_properties, edge_properties):
-        nodes, edges = [], []
-
-        nodes_id = set()
-        for node in response:
-            if not node['node_id'] in nodes_id:
-                nodes_id.add(node['node_id'])
-                nodes.append(node)
-
-        for node in nodes:
-            for edge in node['edges']:
-                if edge['dst_id'] in nodes_id:
-                    edges.append(edge)
-
-        return nodes, edges
+        return await self.load_edges(edge, properties, traversal)
