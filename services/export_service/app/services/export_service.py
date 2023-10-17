@@ -81,12 +81,9 @@ class ExportService:
             }
 
         else:
-            nodes, edges, _, _ = await asyncio.gather(
-                self.inductive_export_nodes(
-                    nodes_params, job.n_layers, job.entity_id, job_key
-                ),
-                self.inductive_export_edges(
-                    edges_params, job.n_layers, job.entity_id, job_key
+            (nodes, edges), _, _ = await asyncio.gather(
+                self.inductive_export(
+                    nodes_params, edges_params, job.n_layers, job.entity_id, job_key
                 ),
                 self.s3_service.upload_meta(meta_params, job_key),
                 self.s3_service.upload_train_config(job, job_key),
@@ -151,34 +148,28 @@ class ExportService:
 
         return edges_list[0]
 
-    async def inductive_export_nodes(
-        self, nodes_params: dict[list[str]], n_layers, entity_id, job_key
+    async def inductive_export(
+        self,
+        nodes_params: dict[list[str]],
+        edges_params: dict[list[str]],
+        n_layers: int,
+        entity_id: int,
+        job_key: str
     ):
-        nodes_list = []
+        for edge_label, edge_properties in edges_params.items():
+            node_label = edge_label.out
+            nodes_properties = nodes_params[node_label]
 
-        for label, properties in nodes_params.items():
-            nodes = await self.load_service.inductive_load_nodes(
-                label, properties, n_layers, entity_id
+            nodes, edges = await self.load_service.inductive_load(
+                edge_label, edge_properties,
+                node_label, nodes_properties,
+                entity_id, n_layers
             )
 
-            await self.s3_service.upload_nodes(job_key, nodes, label, properties)
-
-            nodes_list.append(nodes)
-
-        return nodes_list[0]
-
-    async def inductive_export_edges(
-        self, edges_params: dict[list[str]], n_layers, entity_id, job_key
-    ):
-        edges_list = []
-
-        for label, properties in edges_params.items():
-            edges = await self.load_service.inductive_load_edges(
-                label, properties, n_layers, entity_id
+            await asyncio.gather(
+                self.s3_service.upload_edges(job_key, edges, edge_label, edge_properties),
+                self.s3_service.upload_nodes(job_key, nodes, node_label, nodes_properties)
             )
 
-            await self.s3_service.upload_edges(job_key, edges, label, properties)
+            return nodes, edges
 
-            edges_list.append(edges)
-
-        return edges_list[0]

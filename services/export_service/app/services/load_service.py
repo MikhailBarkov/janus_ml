@@ -38,7 +38,6 @@ class LoadService:
 
             proj_traversal = (
                 traversal
-                .hasLabel(label)
                 .project(*all_properties)
                 .by(T.id)
             )
@@ -64,11 +63,6 @@ class LoadService:
 
             proj_traversal = (
                 traversal
-                .hasLabel(edge.label)
-                .and_(
-                    __.outV().hasLabel(edge.out),
-                    __.inV().hasLabel(edge.in_)
-                )
                 .project(*all_properties)
                 .by(__.outV().id_())
                 .by(__.inV().id_())
@@ -82,42 +76,55 @@ class LoadService:
         return await get_traversal().toList()
 
     async def transductive_load_nodes(self, label: str, properties: list[str]):
-        traversal = self.g.V()
+        traversal = self.g.V().hasLabel(label)
         return await self.load_nodes(label, properties, traversal)
 
     async def transductive_load_edges(self, edge: tuple[str, str, str], properties: list[str]):
-        traversal = self.g.E()
-        return await self.load_edges(edge, properties, traversal)
-
-    async def inductive_load_nodes(
-        self, label: str, properties: list[str], n_layers: int, node_id: int
-    ):
-        trav = self.g.V(node_id)
-        for _ in range(n_layers):
-            subgraph_trav = trav.in_()
-
-        traversal = trav.dedup()
-
-        return await self.load_nodes(label, properties, traversal)
-
-    async def inductive_load_edges(
-        self, edge: tuple[str, str, str], properties: list[str], n_layers:int, node_id: int
-    ):
-        subgraph_trav = self.g.V(node_id).hasLabel(edge[0])
-        for _ in range(n_layers):
-            subgraph_trav = subgraph_trav.in_(edge[1]).barrier()
-
-        subgraph = await subgraph_trav.dedup().hasLabel(edge[2]).toList()
-
         traversal = (
-            self.g.E()
-            .hasLabel(edge[1])
-            .where(
-                __.and_(
-                    __.outV().is_(P.within(subgraph)),
-                    __.inV().is_(P.within(subgraph))
-                )
+            self.g
+            .E()
+            .hasLabel(edge.label)
+            .and_(
+                __.outV().hasLabel(edge.out),
+                __.inV().hasLabel(edge.in_)
             )
         )
-
         return await self.load_edges(edge, properties, traversal)
+
+    async def inductive_load(
+        self,
+        edge_label, edge_properties,
+        node_label, node_properties,
+        entity_id, n_layers, n_neighbors=25
+    ):
+        traversal = (
+            self.g
+            .V(entity_id)
+            .hasLabel(edge_label.out)
+            .local(
+                __.inE(edge_label.label)
+                .limit(n_neighbors)
+            )
+            .store('subgraph')
+        )
+
+        for _ in range(n_layers-1):
+            traversal = traversal.local(
+                __.outV()
+                .hasLabel(edge_label.in_)
+                .inE(edge_label.label)
+                .limit(n_neighbors)
+            ).store('subgraph')
+
+        traversal = traversal.cap('subgraph').unfold()
+
+        edges = await self.load_edges(edge_label, edge_properties, traversal)
+
+        nodes_idxs = {edge['src_id'] for edge in edges}.union(
+            {edge['dst_id'] for edge in edges}
+        )
+
+        traversal = self.g.V(nodes_idxs)
+        nodes = await self.load_nodes(node_label, node_properties, traversal)
+
+        return nodes, edges
