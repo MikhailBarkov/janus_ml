@@ -26,18 +26,12 @@ class SAGE(LightningModule):
         self.NAME = 'SAGE'
 
         self.layers = nn.ModuleList()
-        self.layers.append(
-            dgl.nn.SAGEConv(in_feats, n_hidden, aggregator_type)
-        )
+        self.layers.append(dgl.nn.SAGEConv(in_feats, n_hidden, aggregator_type))
         for i in range(1, n_layers - 1):
-            self.layers.append(
-                dgl.nn.SAGEConv(n_hidden, n_hidden, aggregator_type)
-            )
-        self.layers.append(
-            dgl.nn.SAGEConv(n_hidden, n_classes, aggregator_type)
-        )
+            self.layers.append(dgl.nn.SAGEConv(n_hidden, n_hidden, aggregator_type))
+        self.layers.append(dgl.nn.SAGEConv(n_hidden, n_classes, aggregator_type))
 
-        self.dropout = nn.Dropout()
+        self.dropout = nn.Dropout(dropout)
         self.n_hidden = n_hidden
         self.n_classes = n_classes
         self.learning_rate = learning_rate

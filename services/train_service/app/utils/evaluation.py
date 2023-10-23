@@ -9,7 +9,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def predict(graph, model, batch_size, device):
     graph.ndata["h"] = graph.ndata["feat"]
-    sampler = dgl.dataloading.MultiLayerFullNeighborSampler(1)
+    sampler = dgl.dataloading.NeighborSampler(
+        [25]*model.n_classes, prefetch_node_feats=["feat"], prefetch_labels=["label"]
+    )
     data_loader = dgl.dataloading.DataLoader(
         graph,
         torch.arange(graph.number_of_nodes()).to(device),
@@ -41,16 +43,19 @@ def predict(graph, model, batch_size, device):
     return y
 
 
-def evaluate(dataset, model):
-    predict_batch_size = 4096
+def evaluate(dataset, test_mask, model):
+    predict_batch_size = 4069
     graph = dataset[0]
-    test_idx = graph.ndata['test_mask'].type(torch.int64)
 
     with torch.no_grad():
         pred = predict(graph, model.to(device), predict_batch_size, device)
-        pred = pred[test_idx]
-        label = graph.ndata["label"][test_idx]
-        accuracy = MF.accuracy(pred, label, 'multiclass', num_classes=model.n_classes)
-        accuracy = round(accuracy.item(), 3)
+        pred = pred[test_mask]
+        label = graph.ndata["label"][test_mask]
+        accuracy = MF.accuracy(
+            pred, label, 'multiclass', num_classes=model.n_classes
+        )
+        precision = MF.average_precision(
+            pred, label, 'multiclass', average='macro', num_classes=model.n_classes
+        )
 
-    return accuracy
+    return round(accuracy.item(), 3), round(precision.item(), 3)

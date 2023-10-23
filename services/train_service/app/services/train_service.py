@@ -9,6 +9,7 @@ from utils import (
     NodeClassificationTrainer,
     evaluate,
 )
+from utils.split import train_val_test_split
 from utils.classification.sage import SAGE
 from models import TrainParams
 from settings import (
@@ -64,29 +65,40 @@ class TrainService:
         return {'accuracy': best_model['accuracy']}
 
     async def _train(self, dataset, hyperparameters, train_config):
-
         configure_generator = ParameterSampler(
             hyperparameters, n_iter=app_config.num_search_trials
         )
 
-        Model = await self.get_model_class(train_config)
+        Model = SAGE
         Trainer = self.get_trainer(train_config)
 
         best = {
             'model': None,
             'accuracy': 0,
+            'precision': 0,
             'hyperparameters': None
         }
+
         for config in configure_generator:
-            trainer = Trainer(config, Model, split=train_config.get('split', [0.8, 0.1, 0.1]))
-            model, params = trainer.fit(dataset)
+            train_mask, val_mask, test_mask = train_val_test_split(
+                dataset[0], train_config['target'].get('split_rate', [0.1, 0.1, 0.8])
+            )
+            trainer = Trainer(config, Model)
+            model, params = trainer.fit(dataset, train_mask, val_mask)
 
-            accuracy = evaluate(dataset, model)
+            accuracy, precision = evaluate(dataset, test_mask, model)
 
-            if accuracy > best['accuracy']:
+            if any([
+                accuracy > best['accuracy'],
+                accuracy == best['accuracy'] and precision > best['precision']
+            ]):
                 best['accuracy'] = accuracy
+                best['precision'] = precision
                 best['model'] = model.state_dict()
                 best['hyperparameters'] = params
+
+            if precision == 1 and accuracy == 1:
+                break
 
         return best
 
@@ -105,6 +117,3 @@ class TrainService:
         target = train_config['target']
         if target['type'] == 'classification' and target.get('node'):
             return NodeClassificationTrainer
-
-    async def get_model_class(self, train_config):
-        return SAGE

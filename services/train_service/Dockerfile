@@ -8,7 +8,7 @@ ADD config /train_service/config/
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-ENV num_search_trials=5 \
+ENV num_search_trials=10 \
     batch_size=1024 \
     ml_device=cpu \
     aws_access_key_id=123 \
