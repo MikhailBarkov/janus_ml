@@ -37,7 +37,7 @@ services:
     volumes:
       - .:/train_service/
     ipc: host
-    mem_limit: 2G
+    mem_limit: 3G
     networks:
       - net
 
