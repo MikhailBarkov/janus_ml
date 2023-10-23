@@ -69,6 +69,8 @@ COPY load-initdb.sh /usr/local/bin/
 COPY conf/gremlin-server/gremlin-server.yaml ${JANUS_CONFIG_DIR}/janusgraph-server.yaml
 COPY conf/gremlin-server/services.yaml ${JANUS_CONFIG_DIR}/services.yaml
 COPY ${JANUS_INITDB_DIR}/upload_cora.groovy ${JANUS_INITDB_DIR}/upload_cora.groovy
+COPY ${JANUS_INITDB_DIR}/data/cora_nodes.csv ${JANUS_HOME}/dataset/cora_nodes.csv
+COPY ${JANUS_INITDB_DIR}/data/cora_edges.csv ${JANUS_HOME}/dataset/cora_edges.csv
 COPY ${JANUS_INITDB_DIR}/data/FA-KES-Dataset.csv ${JANUS_HOME}/dataset/FA-KES-Dataset.csv
 
 
