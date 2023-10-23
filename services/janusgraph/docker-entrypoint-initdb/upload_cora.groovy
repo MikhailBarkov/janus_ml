@@ -2,6 +2,35 @@ import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalS
 
 g = traversal().withRemote('conf/remote-graph.properties')
 
+if (g.V().hasLabel("cora").hasNext()) {
+    println "Cora Dataset is already uploaded."
+} else {
+    g.V().hasLabel("paper").drop().iterate()
+
+    rows = new File("dataset/cora_nodes.csv").readLines().tail()*.split(';')
+    nodes = []
+    for (row in rows) {
+        nodes.add(
+            g.addV("paper").
+                property("category", row[0]).
+                property("word_vector", row[1]).
+                next()
+        )
+    }
+
+    edges = new File("dataset/cora_edges.csv").readLines().tail()*.split(';')
+    for (edge in edges) {
+        g.addE("citation").
+            from(nodes[edge[0] as Integer]).
+            to(nodes[edge[1] as Integer]).
+            iterate()
+    }
+
+    g.addV("cora").next()
+
+    println "CORA Dataset uploading is over."
+}
+
 if (g.V().hasLabel("fake_news").hasNext()) {
     println "Fake News Dataset is already uploaded."
 } else {
