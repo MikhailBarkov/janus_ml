@@ -172,4 +172,3 @@ class ExportService:
             )
 
             return nodes, edges
-

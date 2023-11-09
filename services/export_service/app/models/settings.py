@@ -8,4 +8,7 @@ class Settings(BaseSettings, case_sensitive=False):
     aws_secret_access_key: str
 
     chunk_size: int
-    gremlin_batch_size: int
+
+    janusgraph_pool_size: int
+    jasnugraph_max_content_length: int
+    janusgraph_batch_size: int

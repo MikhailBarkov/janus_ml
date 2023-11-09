@@ -63,8 +63,6 @@ class EndpointService:
             config.util_bucket,
         )
 
-        return
-
     async def call(self, call_params):
         endpoint = self.endpoints.get(call_params.endpoint_id)
         if endpoint is None:
@@ -73,7 +71,3 @@ class EndpointService:
         return await endpoint.call(
             call_params.predict_entity_idx, interface=call_params.interface
         )
-
-
-
-

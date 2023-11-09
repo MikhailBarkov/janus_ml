@@ -62,7 +62,11 @@ class TrainService:
                 endpoint_resp = await resp.json()
 
         # add resp with accuracy and s3_path params + more info
-        return {'accuracy': best_model['accuracy']}
+        return {
+            'accuracy': best_model['accuracy'],
+            'precision': best_model['precision'],
+            'hyperparameters': best_model['hyperparameters']
+        }
 
     async def _train(self, dataset, hyperparameters, train_config):
         configure_generator = ParameterSampler(
@@ -92,10 +96,12 @@ class TrainService:
                 accuracy > best['accuracy'],
                 accuracy == best['accuracy'] and precision > best['precision']
             ]):
-                best['accuracy'] = accuracy
-                best['precision'] = precision
-                best['model'] = model.state_dict()
-                best['hyperparameters'] = params
+                best = {
+                    'accuracy': accuracy,
+                    'precision': precision,
+                    'model': model.state_dict(),
+                    'hyperparameters': params,
+                }
 
             if precision == 1 and accuracy == 1:
                 break

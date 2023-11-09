@@ -53,14 +53,14 @@ services:
     networks:
       - net
 
-  testing_service:
-    build: ./testing_service
-    container_name: testing_service
-    command: "start-notebook.sh"
-    ports:
-      - 8888:8888
-    networks:
-      - net
+  # testing_service:
+  #   build: ./testing_service
+  #   container_name: testing_service
+  #   command: "start-notebook.sh"
+  #   ports:
+  #     - 8888:8888
+  #   networks:
+  #     - net
 
   s3:
     image: minio/minio

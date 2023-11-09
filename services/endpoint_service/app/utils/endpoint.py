@@ -25,6 +25,7 @@ class Endpoint:
         self.name = params['train_config']['name']
         self.params = params
         self.model = Model(**params['hyperparameters'])
+
         self.model.load_state_dict(state)
         # self.code_label_map = params['proc_config']['node_categories_map']['label']
 
@@ -36,13 +37,11 @@ class Endpoint:
     def predict(self, entity_id, graph):
         self.model.eval()
         with torch.no_grad():
-            prediction = self.model(graph, graph.ndata['feat']).tolist()[entity_id]
+            prediction = self.model(graph, graph.ndata['feat']).tolist()
 
-        return prediction.index(max(prediction))
+        return prediction[entity_id].index(max(prediction[entity_id]))
 
     async def load_graph(self, entity_id, interface):
-        #TODO: add loading from cache
-
         train_config = self.params['train_config']
         train_config.update(
             {

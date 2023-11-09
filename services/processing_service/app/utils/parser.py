@@ -13,14 +13,14 @@ class DataParser:
         return {header: self.parse_header(header, df) for header in df}
 
     def parse_header(self, header, df: pd.DataFrame):
-            if header == 'label':
-                #TODO: Heterogenus graph
-                pass
-            elif header in self.encoders:
-                encoder = self.encoders[header]
-                return encoder(df[header])
-            else:
-                raise ValueError("Can't encode header" + header + str(self.encoders))
+        if header == 'label':
+            #TODO: Heterogenus graph
+            pass
+        elif header in self.encoders:
+            encoder = self.encoders[header]
+            return encoder(df[header])
+        else:
+            raise ValueError("Can't encode header" + header + str(self.encoders))
 
     def encode_label(self, df):
         category_code = max(self.categories_map['label'].keys()) + 1

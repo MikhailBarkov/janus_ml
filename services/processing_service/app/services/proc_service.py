@@ -40,9 +40,7 @@ class ProcService:
             edata_parser=e_parser
         )
 
-        await asyncio.gather(
-            *[e.update() for e in n_encoders.values()]
-        )
+        await asyncio.gather(*[e.update() for e in n_encoders.values()])
 
         dataset_s3_key = os.path.join(
             self.proc_params.processed_data_s3_location,
@@ -65,10 +63,7 @@ class ProcService:
             )
         )
 
-        await asyncio.gather(
-            upload_dataset_coro,
-            upload_processing_config_coro,
-        )
+        await asyncio.gather(upload_dataset_coro, upload_processing_config_coro)
 
         return processing_config
 

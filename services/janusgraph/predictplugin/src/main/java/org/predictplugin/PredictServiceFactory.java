@@ -17,7 +17,7 @@ import java.net.MalformedURLException;
 
 
 class PredictServiceFactory implements Service.ServiceFactory {
-    protected String NAME;
+    private String NAME;
 
     protected String serviceURL;
 

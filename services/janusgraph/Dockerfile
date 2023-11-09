@@ -22,13 +22,13 @@ RUN apt update -y && apt install -y gpg unzip curl && \
     rm -rf ${JANUS_HOME}/javadocs && \
     rm -rf ${JANUS_HOME}/log && \
     rm -rf ${JANUS_HOME}/examples && \
-    rm -rf ${JANUS_HOME}/conf/janusgraph-*.properties && \
     mv ${JANUS_HOME}/conf/gremlin-server/gremlin-server.yaml ${JANUS_HOME}/conf/janusgraph-server.yaml && \
     rm -rf ${JANUS_HOME}/conf/gremlin-server
 
 COPY conf/ ${JANUS_HOME}/conf/
 COPY scripts/remote-connect.groovy ${JANUS_HOME}/scripts/
 COPY conf/gremlin-server/gremlin-server.yaml ${JANUS_HOME}/conf/janusgraph-server.yaml
+COPY conf/ ${JANUS_HOME}/conf/
 
 FROM maven:3.6.0-jdk-8-slim as java_builder
 
@@ -68,6 +68,7 @@ COPY docker-entrypoint.sh /usr/local/bin/
 COPY load-initdb.sh /usr/local/bin/
 COPY conf/gremlin-server/gremlin-server.yaml ${JANUS_CONFIG_DIR}/janusgraph-server.yaml
 COPY conf/gremlin-server/services.yaml ${JANUS_CONFIG_DIR}/services.yaml
+COPY conf/janusgraph-berkeleyje-server.properties ${JANUS_CONFIG_DIR}/janusgraph-berkeleyje-server.properties
 COPY ${JANUS_INITDB_DIR}/upload_cora.groovy ${JANUS_INITDB_DIR}/upload_cora.groovy
 COPY ${JANUS_INITDB_DIR}/data/cora_nodes.csv ${JANUS_HOME}/dataset/cora_nodes.csv
 COPY ${JANUS_INITDB_DIR}/data/cora_edges.csv ${JANUS_HOME}/dataset/cora_edges.csv
