@@ -2,10 +2,10 @@ FROM bitnami/pytorch
 
 WORKDIR /processing_service/
 
-ADD app /processing_service/app/
-
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+
+ADD app /processing_service/app/
 
 ENV AWS_ACCESS_KEY_ID=123 \
     AWS_SECRET_ACCESS_KEY=12345678 \

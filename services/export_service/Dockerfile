@@ -2,10 +2,10 @@ FROM python:3.9
 
 WORKDIR /export_service/
 
+ADD app /export_service/app/
+
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-
-ADD app /export_service/app/
 
 ENV ROOT_S3_KEY_NAME=janusgraph_ml \
     AWS_ACCESS_KEY_ID=123 \

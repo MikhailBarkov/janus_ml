@@ -2,10 +2,10 @@ FROM bitnami/pytorch
 
 WORKDIR /endpoint_service/
 
-ADD app /endpoint_service/app/
-
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+
+ADD app /endpoint_service/app/
 
 ENV UTIL_S3_PATH=http://s3:9000 \
     UTIL_BUCKET=util-bucket \
