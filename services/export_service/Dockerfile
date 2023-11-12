@@ -5,7 +5,7 @@ WORKDIR /export_service/
 ADD app /export_service/app/
 
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --no-cache-dir
 
 ENV ROOT_S3_KEY_NAME=janusgraph_ml \
     AWS_ACCESS_KEY_ID=123 \

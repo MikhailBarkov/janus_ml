@@ -3,7 +3,7 @@ FROM bitnami/pytorch
 WORKDIR /endpoint_service/
 
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --no-cache-dir
 
 ADD app /endpoint_service/app/
 

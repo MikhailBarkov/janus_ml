@@ -3,7 +3,7 @@ FROM bitnami/pytorch
 WORKDIR /train_service/
 
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --no-cache-dir
 
 ADD app /train_service/app/
 ADD config /train_service/config/
