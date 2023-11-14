@@ -17,11 +17,7 @@ async def create_endpoint(request):
     service = await EndpointService.create()
     await service.create_endpoint(endpoint_params)
 
-    return web.Response(
-        status=200,
-        content_type='application/json',
-        text='',
-    )
+    return web.Response(status=200, content_type='application/json', text='')
 
 
 async def call_endpoint(request):
@@ -31,10 +27,4 @@ async def call_endpoint(request):
     service = await EndpointService.create()
     prediction = await service.call(call_params)
 
-    return web.Response(
-        status=200,
-        content_type='application/json',
-        text=str(prediction),
-    )
-
-
+    return web.Response(status=200, content_type='application/json', text=str(prediction))

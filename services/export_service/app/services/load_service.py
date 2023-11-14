@@ -1,17 +1,7 @@
-from itertools import chain
-from typing import Callable
-
 from gremlin_python.process.graph_traversal import __
 from gremlin_python.process.traversal import T
-from gremlin_python.process.traversal import P
 
 from db import get_gremlin_connection
-from models import (
-    RequestBody,
-    PGTarget,
-    PGFeature,
-)
-from settings import config
 
 
 class LoadService:
@@ -108,7 +98,7 @@ class LoadService:
             .store('subgraph')
         )
 
-        for _ in range(n_layers-1):
+        for _ in range(n_layers - 1):
             traversal = traversal.local(
                 __.outV()
                 .hasLabel(edge_label.in_)

@@ -21,17 +21,17 @@ def predict(graph, model, batch_size, device):
         num_workers=2
     )
 
-    for l, layer in enumerate(model.layers):
+    for i, layer in enumerate(model.layers):
         y = torch.zeros(
             graph.num_nodes(),
-            model.n_hidden if l != len(model.layers) - 1 else model.n_classes,
+            model.n_hidden if i != len(model.layers) - 1 else model.n_classes,
             device='cpu'
         )
         for input_nodes, output_nodes, blocks in data_loader:
             block = blocks[0]
             x = block.srcdata['h']
             h = layer(block, x)
-            if l != len(model.layers) - 1:
+            if i != len(model.layers) - 1:
                 h = F.relu(h)
                 h = model.dropout(h)
 

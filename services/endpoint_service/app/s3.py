@@ -1,5 +1,3 @@
-import asyncio
-
 import aioboto3
 
 from settings import config

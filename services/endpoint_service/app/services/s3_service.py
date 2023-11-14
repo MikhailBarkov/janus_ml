@@ -3,11 +3,9 @@ import io
 import pickle
 import tempfile
 
-import aioboto3
 import torch
 import dgl
 
-from models import S3Params
 from s3 import S3Client
 from settings import config
 
@@ -20,7 +18,6 @@ class S3Service:
     async def load_model(self, model_name):
         model_key = config.model_key_map[model_name]
         model_bytes = self.load_text(model_key, config.util_bucket)
-
         return pickle.loads(model_bytes)
 
     async def load_state(self, state_url):
@@ -34,15 +31,12 @@ class S3Service:
 
     async def load_text(self, key, bucket, chunk_size=config.chunk_size):
         async with self.s3_client() as s3:
-            s3_obj = await s3.get_object(
-                Bucket=bucket,
-                Key=key
-            )
-
+            s3_obj = await s3.get_object(Bucket=bucket, Key=key)
             stream = s3_obj["Body"]
             batches = []
             while txt := await stream.read(chunk_size):
                 batches.append(txt)
+
         return b''.join(batches)
 
     async def upload_json(self, file_dict, key, bucket):

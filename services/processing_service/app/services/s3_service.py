@@ -5,11 +5,8 @@ import json
 from itertools import chain
 import asyncio
 
-from dgl.data import DGLDataset
 from dgl import save_graphs
-import torch
 import yaml
-import aioboto3
 
 from s3 import S3Client
 from settings import config

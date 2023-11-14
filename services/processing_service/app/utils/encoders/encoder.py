@@ -16,7 +16,7 @@ class Encoder:
 
         try:
             encoder_data = await s3_service.load_json(key)
-        except BaseException as e:
+        except BaseException:
             encoder_data = None
 
         return cls(s3_service, key, encoder_data=encoder_data)

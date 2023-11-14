@@ -61,6 +61,7 @@ class NodeType(BaseType):
     classification = 'classification'
     regression = 'regression'
 
+
 class EdgeType(BaseType):
     '''
     This class is an enumeration of Indicates the type of target
@@ -128,37 +129,39 @@ class PGTarget(BaseTarget):
     property: str
     separator: Optional[pydantic.constr(min_length=1, max_length=1)] = None
 
-    # @pydantic.root_validator(skip_on_failure=True)
-    # def check_valid_type(cls, values):
-    #     type = values.get('type')
+    @pydantic.root_validator(skip_on_failure=True)
+    def check_valid_type(cls, values):
+        type = values.get('type')
 
-    #     if not (values.get('node') is None) and not (values.get('edge') is None):
-    #         raise ValueError(
-    #             'A target object must contain a node element or an edge element, but not both.'
-    #         )
-    #     elif 'node' in values:
-    #
-    #         try:
-    #             NodeType(type)
+        if not (values.get('node') is None) and not (values.get('edge') is None):
+            raise ValueError(
+                'A target object must contain a node element or an edge element, but not both.'
+            )
+        elif 'node' in values:
 
-    #         except ValueError:
-    #             raise ValueError(
-    #                 f'"{type}" is not valid task. The supported task types for nodes are "classification" and "regression"'
-    #             )
+            try:
+                NodeType(type)
 
-    #     elif 'edge' in values:
-    #         try:
-    #             EdgeType(type)
+            except ValueError:
+                raise ValueError(
+                    f'"{type}" is not valid task. The supported task types for nodes are' +
+                    '"classification" and "regression"'
+                )
 
-    #         except ValueError:
-    #             raise ValueError(
-    #                 f'"{type}" is not valid task. The supported task types for nodes are "classification", "regression" and "link_prediction"'
-    #             )
+        elif 'edge' in values:
+            try:
+                EdgeType(type)
 
-    #     else:
-    #         raise ValueError(
-    #             'A target object must contain a node element or an edge element'
-    #         )
+            except ValueError:
+                raise ValueError(
+                    f'"{type}" is not valid task. The supported task types for nodes are' +
+                    '"classification", "regression" and "link_prediction"'
+                )
+
+        else:
+            raise ValueError(
+                'A target object must contain a node element or an edge element'
+            )
 
 
 class RDFTarget(BaseTarget):
@@ -166,8 +169,6 @@ class RDFTarget(BaseTarget):
 
 
 class BaseFeature(pydantic.BaseModel):
-    # TODO
-
     '''
     Args:
         node

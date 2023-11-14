@@ -4,6 +4,7 @@ from aiohttp import web
 
 from routes import setup_routes
 
+
 parser = argparse.ArgumentParser(description="aiohttp server")
 parser.add_argument('--port')
 

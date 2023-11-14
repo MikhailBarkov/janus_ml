@@ -4,9 +4,8 @@ import os
 from dgl.data import CSVDataset
 
 from services import S3Service
-from models import ProcParams, EncodeTypes
+from models import ProcParams
 from utils import DataParser, EncoderManager
-from s3 import S3Client
 
 
 class ProcService:
@@ -34,27 +33,15 @@ class ProcService:
         n_parser, e_parser = DataParser(n_encoders), DataParser(e_encoders)
 
         CSVDataset.META_YAML_NAME = str(meta_yaml_file)
-        dataset = CSVDataset(
-            root_dir,
-            ndata_parser=n_parser,
-            edata_parser=e_parser
-        )
+        dataset = CSVDataset(root_dir, ndata_parser=n_parser, edata_parser=e_parser)
 
         await asyncio.gather(*[e.update() for e in n_encoders.values()])
 
         dataset_s3_key = os.path.join(
-            self.proc_params.processed_data_s3_location,
-            f'{dataset.name}.bin'
+            self.proc_params.processed_data_s3_location, f'{dataset.name}.bin'
         )
-        processing_config = self.prepare_dataset(
-            dataset,
-            train_config,
-            dataset_s3_key,
-        )
-        upload_dataset_coro = self.s3_service.upload_dataset(
-            dataset,
-            dataset_s3_key,
-        )
+        processing_config = self.prepare_dataset(dataset, train_config, dataset_s3_key)
+        upload_dataset_coro = self.s3_service.upload_dataset(dataset, dataset_s3_key)
         upload_processing_config_coro = self.s3_service.upload_json(
             processing_config,
             os.path.join(
@@ -70,7 +57,7 @@ class ProcService:
     async def get_encoders(self, train_config):
         n_encoders, e_encoders = {}, {}
 
-        #TODO: change when tasks appear other than node classification
+        # TODO: change when tasks appear other than node classification
         encoder_cls = EncoderManager.get_encoder_class('category')
 
         if train_config.get('interface') == 'inductive':
@@ -88,9 +75,7 @@ class ProcService:
 
         for feature in train_config['features']:
             if feature.get('property'):
-                encoder_cls = EncoderManager.get_encoder_class(
-                    feature.get('type', 'category')
-                )
+                encoder_cls = EncoderManager.get_encoder_class(feature.get('type', 'category'))
                 encoder = await encoder_cls.load(
                     train_config.get('name'),
                     feature.get('property')
@@ -103,23 +88,18 @@ class ProcService:
 
         return n_encoders, e_encoders
 
-    def prepare_dataset(
-        self, dataset, train_config, dataset_s3_key
-    ):
-        if train_config['target']['type'] == 'classification' and train_config['target'].get('node'):
+    def prepare_dataset(self, dataset, train_config, dataset_s3_key):
+        if all([
+            train_config['target']['type'] == 'classification',
+            train_config['target'].get('node')
+        ]):
             self.prepare_node_classification(
-                dataset,
-                train_config['target'],
-                train_config['features']
+                dataset, train_config['target'], train_config['features']
             )
 
-        return {
-            'processed_data_s3_location': dataset_s3_key,
-        }
-
+        return {'processed_data_s3_location': dataset_s3_key}
 
     def prepare_node_classification(self, dataset, target, features):
         graph = dataset[0]
-
         graph.ndata['label'] = graph.ndata[target['property']]
         graph.ndata['feat'] = graph.ndata[features[0]['property']]

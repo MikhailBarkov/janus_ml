@@ -6,8 +6,6 @@ from services.load_service import LoadService
 from services.s3_service import S3Service
 from settings import config
 from models import (
-    BaseTarget,
-    BaseFeature,
     Interface,
     UserJob,
     UtilJob

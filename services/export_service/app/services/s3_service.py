@@ -1,9 +1,6 @@
 import io
 import csv
 import yaml
-import json
-
-from gremlin_python.process.traversal import T, Direction
 
 from s3 import S3Client
 from models import Edge

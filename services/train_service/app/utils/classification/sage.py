@@ -2,7 +2,6 @@ import dgl
 import torch
 import dgl.data
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 from torchmetrics import Accuracy
 from pytorch_lightning import LightningModule
@@ -40,9 +39,9 @@ class SAGE(LightningModule):
 
     def forward(self, blocks, x):
         h = x
-        for l, (layer, block) in enumerate(zip(self.layers, blocks)):
+        for i, (layer, block) in enumerate(zip(self.layers, blocks)):
             h = layer(block, h)
-            if l != len(self.layers) - 1:
+            if i != len(self.layers) - 1:
                 h = F.relu(h)
                 h = self.dropout(h)
         return h

@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from services import S3Service
+
 from models import EncodeTypes
 from utils.encoders import Encoder
+
 
 class CategoryEncoder(Encoder):
 

@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from models import EncodeTypes
-
 
 class DataParser:
 
@@ -14,7 +12,7 @@ class DataParser:
 
     def parse_header(self, header, df: pd.DataFrame):
         if header == 'label':
-            #TODO: Heterogenus graph
+            # TODO: Heterogenus graph
             pass
         elif header in self.encoders:
             encoder = self.encoders[header]
@@ -33,7 +31,7 @@ class DataParser:
     def category_encode(self, df):
         df = df.astype('category')
 
-        #TODO: add categories_map
+        # TODO: add categories_map
 
         return np.array(df.cat.codes, dtype="int64")
 

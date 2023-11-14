@@ -13,3 +13,18 @@ from utils.encoders.int_array_encoder import IntArrayEncoder
 
 from utils.encoders.int_encoder import IntEncoder
 from utils.encoders.float_encoder import FloatEncoder
+
+
+__all__ = [
+    "Encoder",
+    "ArrayEncoder",
+    "TypeEncoder",
+    "BOWEncoder",
+    "TFIDFEncoder",
+    "HashEncoder",
+    "CategoryEncoder",
+    "FloatArrayEncoder",
+    "IntArrayEncoder",
+    "IntEncoder",
+    "FloatEncoder",
+]

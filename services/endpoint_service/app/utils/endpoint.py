@@ -1,12 +1,10 @@
-import asyncio
-
 import aiohttp
 import torch
-import datetime
 
 from services.s3_service import S3Service
 from settings import config
 from utils.temp.sage import SAGE
+
 
 class Endpoint:
 
@@ -27,7 +25,6 @@ class Endpoint:
         self.model = Model(**params['hyperparameters'])
 
         self.model.load_state_dict(state)
-        # self.code_label_map = params['proc_config']['node_categories_map']['label']
 
     async def call(self, entity_id, interface):
         graph, entity_id = await self.load_graph(entity_id, interface)
@@ -74,9 +71,7 @@ class Endpoint:
         }
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(
-                config.export_service_url, json=request_json
-            ) as resp:
+            async with session.post(config.export_service_url, json=request_json) as resp:
                 return await resp.json(content_type=None)
 
     async def processing(self, export_resp, processed_data_s3_location):
@@ -89,7 +84,5 @@ class Endpoint:
         }
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(
-                config.processing_service_url, json=request_json
-            ) as resp:
+            async with session.post(config.processing_service_url, json=request_json) as resp:
                 return await resp.json(content_type=None)

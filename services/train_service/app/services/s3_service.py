@@ -1,10 +1,7 @@
 import json
-import os
 import tempfile
 import io
-import pickle
 
-import aioboto3
 import dgl
 import torch
 

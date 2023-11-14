@@ -2,7 +2,6 @@ import asyncio
 
 from utils.endpoint import Endpoint
 from services import S3Service
-from models import S3Params
 from settings import config
 
 
@@ -15,9 +14,7 @@ class EndpointService:
         if not hasattr(cls, 'endpoints'):
             endpoints = await self.load_endpoints()
 
-            self.endpoints = {
-                endpoint.name: endpoint for endpoint in endpoints
-            }
+            self.endpoints = {endpoint.name: endpoint for endpoint in endpoints}
 
         return self
 
@@ -53,9 +50,7 @@ class EndpointService:
         self.endpoints[endpoint.name] = endpoint
 
         if not (endpoint_config.s3_key in self.endpoints_config['endpoints_s3_keys']):
-            self.endpoints_config['endpoints_s3_keys'].append(
-                endpoint_config.s3_key
-            )
+            self.endpoints_config['endpoints_s3_keys'].append(endpoint_config.s3_key)
 
         await self.s3_service.upload_json(
             self.endpoints_config,
@@ -68,6 +63,4 @@ class EndpointService:
         if endpoint is None:
             raise ValueError(f'Endpoint with id {call_params.endpoint_id} not found')
 
-        return await endpoint.call(
-            call_params.predict_entity_idx, interface=call_params.interface
-        )
+        return await endpoint.call(call_params.predict_entity_idx, interface=call_params.interface)

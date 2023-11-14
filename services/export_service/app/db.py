@@ -1,8 +1,4 @@
-import asyncio
-
 from aiogremlin import DriverRemoteConnection, Graph
-
-from settings import config
 
 
 async def get_gremlin_connection(janus_url):

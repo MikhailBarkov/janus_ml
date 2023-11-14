@@ -36,9 +36,7 @@ class TrainService:
         )
 
         best_model = await self._train(dataset, hyperparameters, train_config)
-        model_s3_key = os.path.join(
-            app_config.util_dir_s3_key, train_config['name'], 'model.bin'
-        )
+        model_s3_key = os.path.join(app_config.util_dir_s3_key, train_config['name'], 'model.bin')
 
         model_config = {
             'train_config': train_config,
@@ -56,12 +54,10 @@ class TrainService:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                app_config.create_endpoint_url,
-                json={'s3_key': model_config_s3_key},
+                app_config.create_endpoint_url, json={'s3_key': model_config_s3_key}
             ) as resp:
-                endpoint_resp = await resp.json()
+                await resp.json()
 
-        # add resp with accuracy and s3_path params + more info
         return {
             'accuracy': best_model['accuracy'],
             'precision': best_model['precision'],
@@ -113,7 +109,7 @@ class TrainService:
 
         if self.train_params.model_hpo_config_s3_key:
             user_hpo_config = await self.s3_service.load_json(
-                train_params.model_hpo_config_s3_key
+                self.train_params.model_hpo_config_s3_key
             )
             hpo_config.update(user_hpo_config)
 

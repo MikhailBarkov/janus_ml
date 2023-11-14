@@ -1,9 +1,6 @@
-import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from utils.split import train_val_test_split
-from utils.train_setup import device
 from utils.data_module import DataModule
 from settings import config
 
@@ -38,13 +35,13 @@ class NodeClassificationTrainer(Trainer):
         a, b = self.n_hidden_multiplier
         n_hidden = int(a * data_module.in_feats + b * data_module.n_classes)
         params = {
-            'in_feats':data_module.in_feats,
-            'n_layers':self.n_layers,
-            'n_hidden':n_hidden,
-            'n_classes':data_module.n_classes,
-            'aggregator_type':"mean",
-            'dropout':self.dropout,
-            'learning_rate':self.learning_rate
+            'in_feats': data_module.in_feats,
+            'n_layers': self.n_layers,
+            'n_hidden': n_hidden,
+            'n_classes': data_module.n_classes,
+            'aggregator_type': 'mean',
+            'dropout': self.dropout,
+            'learning_rate': self.learning_rate
         }
         model = self.Model(**params)
 

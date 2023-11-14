@@ -1,5 +1,3 @@
-import json
-
 from aiohttp import web
 
 from models import RequestBody
@@ -19,8 +17,3 @@ async def export(request):
     data = await service.export()
 
     return web.json_response(data)
-    # return web.Response(
-    #     status=200,
-    #     content_type='application/json',
-    #     text=json.dumps(data[0])
-    # )

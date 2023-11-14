@@ -2,8 +2,6 @@ from typing import Dict
 
 from pydantic import (
     BaseModel,
-    HttpUrl,
-    AnyUrl,
     conint
 )
 from pydantic_settings import BaseSettings

@@ -5,8 +5,6 @@ WORKDIR /endpoint_service/
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt --no-cache-dir
 
-ADD app /endpoint_service/app/
-
 ENV UTIL_S3_PATH=http://s3:9000 \
     UTIL_BUCKET=util-bucket \
     ENDPOINTS_CONFIG_S3_KEY=endpoints/endpoints_config.json \
@@ -17,3 +15,5 @@ ENV UTIL_S3_PATH=http://s3:9000 \
     AWS_ACCESS_KEY_ID=123 \
     AWS_SECRET_ACCESS_KEY=12345678 \
     MODEL_KEY_MAP='{"SAGE": "models/SAGE.bin"}'
+
+COPY app /endpoint_service/app/

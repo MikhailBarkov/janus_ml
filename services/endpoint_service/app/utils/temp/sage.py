@@ -2,11 +2,9 @@ import dgl
 import torch
 import dgl.data
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 from torchmetrics import Accuracy
 from pytorch_lightning import LightningModule
-import pickle
 
 
 class SAGE(LightningModule):
@@ -26,16 +24,10 @@ class SAGE(LightningModule):
         self.NAME = 'SAGE'
 
         self.layers = nn.ModuleList()
-        self.layers.append(
-            dgl.nn.SAGEConv(in_feats, n_hidden, aggregator_type)
-        )
+        self.layers.append(dgl.nn.SAGEConv(in_feats, n_hidden, aggregator_type))
         for i in range(1, n_layers - 1):
-            self.layers.append(
-                dgl.nn.SAGEConv(n_hidden, n_hidden, aggregator_type)
-            )
-        self.layers.append(
-            dgl.nn.SAGEConv(n_hidden, n_classes, aggregator_type)
-        )
+            self.layers.append(dgl.nn.SAGEConv(n_hidden, n_hidden, aggregator_type))
+        self.layers.append(dgl.nn.SAGEConv(n_hidden, n_classes, aggregator_type))
 
         self.dropout = nn.Dropout()
         self.n_hidden = n_hidden
@@ -46,9 +38,9 @@ class SAGE(LightningModule):
 
     def forward(self, graph, x):
         h = x
-        for l in self.layers:
-            h = l(graph, h)
-            if l != len(self.layers) - 1:
+        for layer in self.layers:
+            h = layer(graph, h)
+            if layer != len(self.layers) - 1:
                 h = F.relu(h)
                 h = self.dropout(h)
         return h
@@ -85,9 +77,5 @@ class SAGE(LightningModule):
         )
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(
-            self.parameters(),
-            lr=self.learning_rate,
-            weight_decay=5e-4
-        )
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=5e-4)
         return optimizer

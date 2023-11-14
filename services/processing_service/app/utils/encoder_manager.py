@@ -10,6 +10,7 @@ from utils.encoders import (
     HashEncoder
 )
 
+
 class EncoderManager:
 
     ENCODERS_MAP = {
